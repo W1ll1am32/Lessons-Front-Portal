@@ -2,11 +2,79 @@ import {OrderCreate, OrderDetails, OrderPagination, OrderUpdate} from "@/models/
 
 const api_link: string = 'https://lessonsmy.tech/api';
 
+interface JWTPayload {
+    exp?: number;
+    [key: string]: any; // Allow other fields
+}
+
+function isTokenExpired(token: string): boolean {
+    try {
+        // Split the token into parts
+        const [, payload] = token.split('.');
+
+        // Decode base64 payload (works in both browser and Node.js)
+        const decodedPayload = JSON.parse(
+            typeof atob === 'function'
+                ? atob(payload) // Browser environment
+                : Buffer.from(payload, 'base64').toString('utf8') // Node.js environment
+        ) as JWTPayload;
+
+        // Check if exp exists and compare with current time (in seconds)
+        if (decodedPayload.exp) {
+            const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+            return decodedPayload.exp < currentTime;
+        }
+
+        // If no exp claim, assume not expired
+        return false;
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return true; // Treat invalid tokens as expired for safety
+    }
+}
+
+export const getToken = async (userdata: string): Promise<string | null> => {
+    try {
+        if (!userdata) {
+            return null // navigate auth page
+        }
+        const ResponseData = await fetch(`https://lessonsmy.tech/auth/init-data`, {
+            method: "POST",
+            body: JSON.stringify({
+                "initData": userdata,
+                "role": "Tutor",
+            }),
+            headers: {"Content-Type": 'application/json'},
+        });
+
+        console.log("Response status:", ResponseData.status);
+        console.log("Response headers:", ResponseData.headers);
+
+        if (!ResponseData.ok) {
+            const errorText = await ResponseData.text();
+            throw new Error(errorText || 'Не удалось загрузить заказы');
+        }
+        const result = await ResponseData.json();
+        return result.token;
+    } catch (error) {
+        console.error(error);
+        return null
+    }
+}
+
 export const getOrders = async (userdata: string, limit: number, page: number): Promise<OrderPagination | null> => {
     try {
         const AuthToken = localStorage.getItem("token");
         if (!AuthToken || !userdata) {
             return null // navigate auth page
+        }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return null;
+            }
         }
         const ResponseOrders = await fetch(`${api_link}/orders/pagination/student?size=${limit}&page=${page}`, {
             method: "GET",
@@ -42,6 +110,14 @@ export const getOrderById = async (id: string, userdata: string): Promise<OrderD
         if (!AuthToken || !userdata) {
             return null // navigate auth page
         }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return null;
+            }
+        }
         const ResponseOrder = await fetch(`${api_link}/orders/id/${id}`, {
             method: "GET",
             headers: {"Authorization": AuthToken },
@@ -64,6 +140,14 @@ export const createOrder = async (orderdata: OrderCreate, userdata: string): Pro
         const AuthToken = localStorage.getItem("token");
         if (!AuthToken || !userdata) {
             return null // navigate auth page
+        }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return null;
+            }
         }
         const responseOrder = await fetch(`${api_link}/orders`, {
             method: 'POST',
@@ -89,6 +173,14 @@ export const deleteOrder = async (id: string, userdata: string): Promise<void> =
         if (!AuthToken || !userdata) {
             return
         }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return;
+            }
+        }
         const responseOrder = await fetch(`${api_link}/orders/id/${id}`, {
             method: "DELETE",
             headers: {"Authorization": AuthToken },
@@ -110,7 +202,14 @@ export const updateOrder = async (id: string, userdata: string, orderdata: Order
         if (!AuthToken || !userdata) {
             return
         }
-
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return;
+            }
+        }
         const responseOrder = await fetch(`${api_link}/orders/id/${id}`, {
             method: "PUT",
             body: JSON.stringify(orderdata),
@@ -136,7 +235,14 @@ export const selectTutorForOrder = async (responseId: string, userdata: string):
         if (!AuthToken || !userdata) {
             return
         }
-
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return;
+            }
+        }
         const responseOrder = await fetch(`${api_link}/orders/select/id/${responseId}`, {
             method: "POST",
             headers: {"content-type": 'application/json', "Authorization": AuthToken },
@@ -152,5 +258,74 @@ export const selectTutorForOrder = async (responseId: string, userdata: string):
     } catch (error) {
         // throw new Error("Ошибка при удалении заказа:")
         console.error(error);
+    }
+}
+
+export const setOrderStatus = async (userdata: string | undefined, id: string | undefined, status: boolean): Promise<boolean> => {
+    try {
+        const AuthToken = localStorage.getItem("token");
+        if (!AuthToken || !userdata) {
+            return false;
+        }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return false;
+            }
+        }
+        const responseOrder = await fetch(`${api_link}/orders/id/${id}/active`, {
+            method: "POST",
+            body: JSON.stringify({"is_active": status}),
+            headers: {"content-type": 'application/json', "Authorization": AuthToken },
+        })
+
+        console.log("Response status:", responseOrder.status);
+        console.log("Response headers:", responseOrder.headers);
+
+        if (!responseOrder.ok) {
+            const error = await responseOrder.json();
+            throw new Error("Ошибка при обновлении заказа" + error.error);
+        }
+        return responseOrder.ok;
+    } catch (error) {
+        // throw new Error("Ошибка при удалении заказа:")
+        console.error(error);
+        return false;
+    }
+}
+
+export const suggestOrderToTutor = async (userdata: string | undefined, id: string | undefined, order_id: string | undefined): Promise<boolean> => {
+    try {
+        const AuthToken = localStorage.getItem("token");
+        if (!AuthToken || !userdata) {
+            return false;
+        }
+        if (isTokenExpired(AuthToken)) {
+            const token = await getToken(userdata);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                return false;
+            }
+        }
+        const responseOrder = await fetch(`${api_link}/orders/suggest/tutor/${id}/?order_id=${order_id}`, {
+            method: "POST",
+            headers: {"content-type": 'application/json', "Authorization": AuthToken },
+        })
+
+        console.log("Response status:", responseOrder.status);
+        console.log("Response headers:", responseOrder.headers);
+
+        if (!responseOrder.ok) {
+            const error = await responseOrder.json();
+            throw new Error("Ошибка при обновлении заказа" + error.error);
+        }
+        return responseOrder.ok;
+    } catch (error) {
+        // throw new Error("Ошибка при удалении заказа:")
+        console.error(error);
+        return false;
     }
 }

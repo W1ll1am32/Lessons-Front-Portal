@@ -3,8 +3,6 @@ import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initData, useSignal } from '@telegram-apps/sdk-react';
 import {ValidateInitData} from "@/api/Auth.ts";
-import {Spinner} from "@telegram-apps/telegram-ui";
-import styles from "@/pages/MyOrdersPage.module.css";
 // import { ValidateInitData } from '@/api/auth';
 
 export const StartPage: FC = () => {
@@ -36,5 +34,13 @@ export const StartPage: FC = () => {
         authenticate();
     }, [initDataRaw, navigate]);
 
-    return <Spinner className={styles.spinner} size="l"/>
+    // return <Spinner className={styles.spinner} size="l"/>
+    return <p style={{
+        fontFamily: 'Arial, sans-serif', // Your desired font
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh', // Full viewport height
+        margin: 0, // Remove default margin
+        textAlign: 'center' }}>Проверка авторизации...</p>;
 };

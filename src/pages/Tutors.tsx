@@ -1,13 +1,16 @@
 import {FC, useEffect, useState} from 'react';
 import { Page } from '@/components/Page';
-import {Cell, Headline, Pagination, Placeholder, Spinner, Tabbar} from '@telegram-apps/telegram-ui';
+import {Banner, Headline, Pagination, Placeholder, Spinner, Tabbar, Select} from '@telegram-apps/telegram-ui';
+import {MultiselectOption} from "@telegram-apps/telegram-ui/dist/components/Form/Multiselect/types";
 import styles from './Tutors.module.css';
 import {useNavigate} from "react-router-dom";
 import {initData, useSignal} from "@telegram-apps/sdk-react";
-import {Icon28Archive} from "@telegram-apps/telegram-ui/dist/icons/28/archive";
-import {Icon32ProfileColoredSquare} from "@telegram-apps/telegram-ui/dist/icons/32/profile_colored_square";
 import {getTutors} from "@/api/Tutors.ts";
 import {Tutor} from "@/models/Tutor.ts";
+import UserIcon from "@/icons/user.tsx";
+import OrdersIcon from "@/icons/orders.tsx";
+
+import text_tags from "./Tags.txt";
 
 
 export const TutorsPage: FC = () => {
@@ -18,22 +21,55 @@ export const TutorsPage: FC = () => {
     const [IsLoading, SetIsLoading] = useState<boolean>(true);
     const [Error, SetError] = useState<string | null>(null);
     const [LoadTutor, SetTutors] = useState<Tutor[]>([]);
-    const [currentTabId, setCurrentTab] = useState<string>("orders");
+    const [currentTabId, setCurrentTab] = useState<string>("tutors");
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [availableTags, setOptions] = useState<MultiselectOption[]>([]);
 
     const initDataRaw = useSignal<string | undefined>(initData.raw);
 
     const tabs = [
         {
             id: "tutors",
-            text: "Tutors",
-            Icon: Icon32ProfileColoredSquare,
+            text: "Репетиторы",
+            Icon: UserIcon,
         },
         {
             id: "orders",
-            text: "Orders",
-            Icon: Icon28Archive,
+            text: "Заказы",
+            Icon: OrdersIcon,
         }
     ];
+
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = await fetch(text_tags, {
+                    headers: {
+                        Accept: "text/plain; charset=utf-8",
+                    },
+                });
+                if (!response.ok) {
+                    // @ts-ignore
+                    throw new Error("Failed to fetch tags.txt");
+                }
+                const text = await response.text();
+                const tags = text
+                    .replace(/\r\n/g, "\n")
+                    .split("\n\n")
+                    .map((tag) => tag.trim())
+                    .filter((tag) => tag.length > 0);
+                const fetchedOptions: MultiselectOption[] = tags.map(tag => ({
+                    value: tag.toLowerCase().replace(/\s+/g, '_'), // Convert to lowercase and replace spaces with underscores
+                    label: tag,
+                }));
+                setOptions(fetchedOptions);
+            } catch (err) {
+                console.error("Error fetching tags:", err);
+            }
+        };
+
+        fetchTags();
+    }, []);
 
     useEffect(() => {
         const LoadTutors = async () => {
@@ -43,14 +79,14 @@ export const TutorsPage: FC = () => {
                     SetError("Нет токена");
                     return
                 }
-                const data = await getTutors(initDataRaw, 5, page);
-                // console.log("Сохраняем заказы в состояние MyOrders:", data);
-                if (data == null) {
+                const data = await getTutors(initDataRaw, 3, page, selectedTag);
+                console.log("Туторы:", data);
+                if (data == null || data.Tutors == null) {
                     SetTutors([]);
                     setMaxPage(0);
                 } else {
-                    SetTutors(data.tutors);
-                    setMaxPage(data.pagesCount);
+                    SetTutors(data.Tutors);
+                    setMaxPage(data.Pages);
                 }
             } catch (err) {
                 console.log(err);
@@ -61,7 +97,12 @@ export const TutorsPage: FC = () => {
         };
 
         LoadTutors();
-    }, [page]);
+    }, [page, selectedTag]);
+
+    const handleTagChange = (value: string) => {
+        setSelectedTag(value || null);
+        setPage(1);
+    };
 
     const HandleLinkFunc = (id: string) => {
         navigate(`/tutor/${id}`);
@@ -75,6 +116,20 @@ export const TutorsPage: FC = () => {
         <Page back={false}>
             <div className={styles.Title}>
                 <Headline weight="1"> Репетиторы </Headline>
+            </div>
+            <div className={styles.tagSelector}>
+                <Select
+                    className={styles.selectArea}
+                    value={selectedTag || ''}
+                    onChange={(e) => handleTagChange(e.target.value)}
+                >
+                    <option value="">Все теги</option>
+                    {availableTags.map((tag) => (
+                        <option key={tag.value} value={tag.value}>
+                            {tag.label}
+                        </option>
+                    ))}
+                </Select>
             </div>
             { IsLoading? (
                 <Spinner className={styles.spinner} size="l"/>
@@ -95,17 +150,39 @@ export const TutorsPage: FC = () => {
                 <>
                     <div className={styles.orderList}>
                         {LoadTutor.map((tutor, index) => (
-                            <Cell
+                            <Banner
                                 key={index}
                                 // before={<Avatar size={48} />}
-                                description={tutor.name}
+                                header={tutor.Name}
+                                description={<span>
+        Рейтинг {tutor.Rating} <span className={styles.star}>★</span>
+      </span>}
                                 // subhead={order.}
                                 // subtitle={order.min_price}
                                 // titleBadge={order.status == "New" ? <Badge type="dot"/>: <Badge type="dot"/>}
-                                onClick={() => HandleLinkFunc(tutor.id)}
+                                className={styles.orderItem}
+                                onClick={() => HandleLinkFunc(tutor.Id)}
                             >
-                                {tutor.name}
-                            </Cell>
+                                <div className={styles.bannerContent}>
+                                    {tutor.Tags && tutor.Tags.length > 0 && (
+                                        <div className={styles.tagsContainer}>
+                                            {tutor.Tags.map((tag, tagIndex) => (
+                                                <span key={tagIndex} className={styles.tag}>
+                {tag
+                    .replace(/_/g, ' ') // Replace underscores with spaces
+                    .split(' ') // Split into words
+                    .map((word, index) =>
+                        index === 0
+                            ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                            : word.toLowerCase()
+                    ) // Capitalize first letter of first word, lowercase others
+                    .join(' ')}
+            </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </Banner>
                         ))}
                     </div>
                     <div>

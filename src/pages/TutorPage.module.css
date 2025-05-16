@@ -26,3 +26,129 @@
 .delete {
     color: red;
 }
+
+.centeredHeadline {
+    text-align: center;
+    flex-grow: 1;
+}
+
+.statusText {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--tgui--text_color);
+    margin: 0;
+}
+
+.orderDetails {
+    background-color: var(--tgui--bg_color);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.spinner {
+    display: block;
+    margin: 50px auto;
+}
+
+.statusText {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.tutorInfo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.rating {
+    color: #f39c12;
+    font-size: 1.1em;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tag {
+    background-color: #e0e0e0;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.orderDetails {
+    margin-bottom: 20px;
+}
+
+.orderDetails p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.reviews {
+    margin-top: 20px;
+}
+
+.review {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 15px 0;
+}
+
+.reviewRating {
+    color: #f39c12;
+    margin-bottom: 5px;
+}
+
+.reviewComment {
+    margin: 5px 0;
+    line-height: 1.4;
+}
+
+.reviewDate {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.stars {
+    font-size: 1.1em;
+}
+
+.suggestButton {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.orderList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.orderItem {
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.orderItem p {
+    margin: 0;
+}
+
+.modalHeader {
+    padding: 16px;
+    text-align: center;
+}

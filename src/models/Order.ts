@@ -34,12 +34,14 @@ export interface CurrentResponse {
 
 export interface OrderDetails {
     id: string;
+    name: string;
     student_id: string;
     title: string;
     description: string;
-    tags: string[];
+    grade: number;
     min_price: number;
     max_price: number;
+    tags: string[];
     status: string;
     response_count: number;
     responses: Responses[];
@@ -48,6 +50,7 @@ export interface OrderDetails {
 }
 
 export interface OrderCreate {
+    name: string;
     title: string;
     description: string;
     grade: string;
@@ -70,3 +73,4 @@ export interface OrderPagination {
     pages: number;
 }
 
+export interface Order {}

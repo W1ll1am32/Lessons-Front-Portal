@@ -2,13 +2,19 @@ import {TutorDetails, TutorPagination} from "@/models/Tutor.ts";
 
 const api_link: string = 'https://lessonsmy.tech/api';
 
-export const getTutors = async (userdata: string, limit: number, page: number): Promise<TutorPagination | null> => {
+export const getTutors = async (userdata: string, limit: number, page: number, tag: string | null): Promise<TutorPagination | null> => {
     try {
         const AuthToken = localStorage.getItem("token");
         if (!AuthToken || !userdata) {
             return null
         }
-        const ResponseOrders = await fetch(`${api_link}/users/pagination?size=${limit}&page=${page}`, {
+        let query = ``;
+        if (tag) {
+            query = `${api_link}/users/pagination?size=${limit}&page=${page}&tag=${tag}`;
+        } else {
+            query = `${api_link}/users/pagination?size=${limit}&page=${page}`;
+        }
+        const ResponseOrders = await fetch(query, {
             method: "GET",
             headers: {"Authorization": AuthToken },
         });
@@ -22,13 +28,9 @@ export const getTutors = async (userdata: string, limit: number, page: number): 
         }
         const data = await ResponseOrders.json();
 
-        const tutorData: TutorPagination = {
-            tutors: data.User || [],
-            pagesCount: data.Pages || 0,
-        };
         console.log("Сохраняем заказы в состояние:", data);
         console.warn(data)
-        return tutorData;
+        return data;
     } catch (error) {
         console.error(error);
         return null
@@ -57,7 +59,7 @@ export const getTutorById = async (id: string, userdata: string): Promise<TutorD
         const data = await ResponseOrders.json();
         console.log("Сохраняем заказы в состояние:", data);
         console.warn(data)
-        return data || [];
+        return data || null;
     } catch (error) {
         console.error(error);
         return null

@@ -47,12 +47,35 @@
     height: auto; /* Автоматически подстраивать высоту */
 }
 
+.headerContainer {
+    display: flex;
+    justify-content: space-between; /* Headline on left, button on right */
+    align-items: center; /* Vertically center items */
+    padding: 23px 20px 0; /* Consistent padding */
+}
+
 .orderList {
     margin-top: 20px;
+    padding: 0 15px;
 }
 
 .orderItem {
+    cursor: pointer; /* Indicates the item is clickable */
+    transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth hover effects */
+    border-radius: 8px; /* Optional: Rounded corners for a modern look */
+    padding: 10px; /* Ensure enough padding for touch/click targets */
+    background-color: var(--tgui--bg_color);
+    color: var(--tgui--text_color);
     margin-bottom: 10px;
+}
+
+.orderItem:hover {
+    background-color: var(--tgui--secondary_bg_color); /* Subtle background change on hover */
+    transform: scale(1.02); /* Slight scale-up effect on hover */
+}
+
+.orderItem:active {
+    background-color: var(--tgui--hint_color); /* Feedback when clicked */
 }
 
 .paginationContainer {
@@ -63,3 +86,28 @@
     padding: 10px 0;
     position: relative;
 }
+
+.bannerContent {
+    position: relative;
+    display: flex;
+    justify-content: flex-end; /* Tags on the right */
+    margin-top: 8px; /* Space between description and tags */
+}
+
+.tagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Space between tags */
+    justify-content: flex-end; /* Align tags to the right */
+}
+
+.tag {
+    background-color: var(--tgui--secondary_bg_color); /* Example background color */
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--tgui--text_color);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: inline-block;
+}
+

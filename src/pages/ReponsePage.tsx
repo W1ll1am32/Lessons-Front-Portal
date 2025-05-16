@@ -22,7 +22,7 @@ export const ResponsePage: FC = () => {
 
     // загрузка данных
     useEffect(() => {
-        const currentResponse = async () => {
+        const fetchResponse  = async () => {
             if (id) {
                 try {
                     if (!initDataRaw) {
@@ -38,7 +38,7 @@ export const ResponsePage: FC = () => {
                 }
             }
         }
-        currentResponse();
+        fetchResponse();
     }, [id, initDataRaw]);
 
     useEffect(() => {
@@ -50,12 +50,14 @@ export const ResponsePage: FC = () => {
             if (secondaryButton.setParams.isAvailable()) {
                 secondaryButton.setParams({
                     text: 'Выбрать',
-                    isEnabled: true,
-                    isVisible: true
-                })
+                    isEnabled: !currentResponse.is_final, // Disable if is_final is true
+                    isVisible: !currentResponse.is_final // Hide if is_final is true
+                });
             }
 
             const offClickSecondary = secondaryButton.onClick(async () => {
+                if (currentResponse.is_final) return; // Prevent action if is_final is true
+
                 secondaryButton.setParams({
                     isLoaderVisible: true,
                     isEnabled: false
@@ -64,10 +66,10 @@ export const ResponsePage: FC = () => {
                 if (confirm("Вы хотите выбрать этого репетитора?")) {
                     if (currentResponse?.id && initDataRaw) {
                         await selectTutorForOrder(currentResponse.id, initDataRaw);
-                        alert("Репетитор выбран!")
+                        alert("Репетитор выбран!");
                         navigate(`/orders`);
                     } else {
-                        alert("Возникла ошибка при выборе, попробуйте позже.")
+                        alert("Возникла ошибка при выборе, попробуйте позже.");
                     }
                     secondaryButton.setParams({
                         isLoaderVisible: false,
@@ -88,7 +90,7 @@ export const ResponsePage: FC = () => {
                     isEnabled: false,
                 });
                 secondaryButton.unmount();
-            }
+            };
         }
     }, [currentResponse]);
 
@@ -198,7 +200,7 @@ export const ResponsePage: FC = () => {
                         </div>
                         <div className={styles.responseDetails}>
                             <Headline weight="1">{currentResponse.name}</Headline>
-                            <p className={styles.responseTime}>Время отлика: {currentResponse.created_at}</p>
+                            <p className={styles.responseTime}>Время отлика: {new Date(currentResponse.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className={styles.responseMessage}>
                             <Headline weight="1">Сообщение от репетитора:</Headline>

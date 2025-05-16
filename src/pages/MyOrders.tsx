@@ -1,14 +1,13 @@
 import {FC, useEffect, useState} from 'react';
 import { Page } from '@/components/Page';
-import {Badge, Button, Cell, Headline, Pagination, Placeholder, Spinner, Tabbar} from '@telegram-apps/telegram-ui';
+import {Button, Banner, Headline, Pagination, Placeholder, Spinner, Tabbar} from '@telegram-apps/telegram-ui';
 import styles from './MyOrdersPage.module.css';
 import {useNavigate} from "react-router-dom";
 import {Order} from "@/models/Order.ts";
 import {getOrders} from "@/api/Orders.ts";
 import {initData, useSignal} from "@telegram-apps/sdk-react";
-import {Icon28Archive} from "@telegram-apps/telegram-ui/dist/icons/28/archive";
-import {Icon32ProfileColoredSquare} from "@telegram-apps/telegram-ui/dist/icons/32/profile_colored_square";
-
+import UserIcon from "@/icons/user.tsx";
+import OrdersIcon from "@/icons/orders.tsx";
 
 export const MyOrdersPage: FC = () => {
     const navigate = useNavigate();
@@ -23,13 +22,13 @@ export const MyOrdersPage: FC = () => {
     const tabs = [
         {
             id: "tutors",
-            text: "Tutors",
-            Icon: Icon32ProfileColoredSquare,
+            text: "Репетиторы",
+            Icon: UserIcon,
         },
         {
             id: "orders",
-            text: "Orders",
-            Icon: Icon28Archive,
+            text: "Заказы",
+            Icon: OrdersIcon,
         }
     ];
 
@@ -40,7 +39,7 @@ export const MyOrdersPage: FC = () => {
                     SetError("Нет токена");
                     return
                 }
-                const data = await getOrders(initDataRaw, 5, page);
+                const data = await getOrders(initDataRaw, 3, page);
                 console.log("Сохраняем заказы в состояние MyOrders:", data);
                 if (data == null) {
                     SetNeworders([])
@@ -75,11 +74,9 @@ export const MyOrdersPage: FC = () => {
 
     return (
         <Page back={false}>
-            <div className={styles.Title}>
-                <Headline weight="1"> Мои заказы </Headline>
-            </div>
-            <div className={styles.buttonContainer}>
-                <Button onClick={HandleAddFunc} mode="filled" size="m"> +</Button>
+            <div className={styles.headerContainer}>
+                <Headline weight="1">Мои заказы</Headline>
+                <Button onClick={HandleAddFunc} mode="filled" size="m">+</Button>
             </div>
             { IsLoading? (
                 <Spinner className={styles.spinner} size="l"/>
@@ -99,18 +96,39 @@ export const MyOrdersPage: FC = () => {
                 <>
                 <div className={styles.orderList}>
                     {LoadOrder.map((order, index) => (
-                        <Cell
+                        <Banner
                             key={index}
-                            after={<Badge type="number">{order.response_count}</Badge>}
+                            // after={<Badge type="number">{order.response_count}</Badge>}
                             // before={<Avatar size={48} />}
+                            header={order.title}
+                            subheader={'Цена мин: ' + order.min_price + ' макс: ' + order.max_price}
                             description={order.description}
+                            className={styles.orderItem}
                             // subhead={order.}
                             // subtitle={order.min_price}
                             // titleBadge={order.status == "New" ? <Badge type="dot"/>: <Badge type="dot"/>}
                             onClick={() => HandleLinkFunc(order.id)}
                         >
-                            {order.title}
-                        </Cell>
+                            <div className={styles.bannerContent}>
+                                {order.tags && order.tags.length > 0 && (
+                                    <div className={styles.tagsContainer}>
+                                        {order.tags.map((tag, tagIndex) => (
+                                            <span key={tagIndex} className={styles.tag}>
+                {tag
+                    .replace(/_/g, ' ') // Replace underscores with spaces
+                    .split(' ') // Split into words
+                    .map((word, index) =>
+                        index === 0
+                            ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                            : word.toLowerCase()
+                    ) // Capitalize first letter of first word, lowercase others
+                    .join(' ')}
+            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </Banner>
                     ))}
                 </div>
                 <div>
